@@ -11,10 +11,12 @@ sudo apt-get -y install python3-pip python3-dev libpq-dev postgresql postgresql-
 Log into an interactive Postgres session
 
 `sudo -u postgres psql`
+
 <br><br>
 Create a database
 
 `CREATE DATABASE myproject;`
+
 <br><br>
 Create a database user
 ```
@@ -24,7 +26,7 @@ ALTER ROLE myprojectuser SET default_transaction_isolation TO 'read committed';
 ALTER ROLE myprojectuser SET timezone TO 'Asia/Bangkok';
 GRANT ALL PRIVILEGES ON DATABASE myproject TO myprojectuser;
 ```
-<br><br>
+
 Exit out of the PostgreSQL prompt
 
 `\q`
