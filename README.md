@@ -146,6 +146,7 @@ Edit file `~/websites/myproject/myproject/urls.py`
 
 `sudo nano ~/websites/myproject/myproject/urls.py`
 
+<br><br>
 ```
 urlpatterns = [
     path('myproject/admin/', admin.site.urls),
