@@ -119,6 +119,16 @@ Create an initial user named `admin` with a password of `password123`
 
 `python manage.py createsuperuser --email admin@example.com --username admin`
 
+Edit file `~/websites/myproject/myproject/urls.py`
+
+`sudo nano ~/websites/myproject/myproject/urls.py`
+
+```
+urlpatterns = [
+    path('myproject/admin/', admin.site.urls),
+]
+```
+
 Collect all of the static content into the directory location
 
 `python manage.py collectstatic`
@@ -202,6 +212,65 @@ Currently, if you’ve only started the `myproject.socket` unit, the `myproject.
 
 `sudo systemctl status myproject`
 
-> - myproject.service - gunicorn daemon for myproject
-   Loaded: loaded (/etc/systemd/system/myproject.service; disabled; vendor prese
-   Active: inactive (dead)
+> - myproject.service - gunicorn daemon for myproject<br>Loaded: loaded (/etc/systemd/system/myproject.service; disabled; vendor prese<br>Active: inactive (dead)
+
+To test the socket activation mechanism, we can send a connection to the socket through `curl`
+
+`curl --unix-socket /run/myproject.sock localhost`
+
+You should see the HTML output from your application in the terminal. This indicates that Gunicorn was started and was able to serve your Django application. You can verify that the Gunicorn service is running by typing
+
+`sudo systemctl status myproject`
+
+> - myproject.service - gunicorn daemon for myproject<br>   Loaded: loaded (/etc/systemd/system/myproject.service; disabled; vendor prese<br>   Active: active (running) since Tue 2019-11-19 16:16:19 +07; 1min 43s ago<br> Main PID: 14995 (gunicorn)<br>    Tasks: 4 (limit: 4673)<br>   CGroup: /system.slice/myproject.service<br>           ├─14995 /home/ubuntu/envs/myprojectenv/bin/python3 /home/ubuntu/envs/<br>           ├─14999 /home/ubuntu/envs/myprojectenv/bin/python3 /home/ubuntu/envs/<br>           ├─15001 /home/ubuntu/envs/myprojectenv/bin/python3 /home/ubuntu/envs/<br>           └─15002 /home/ubuntu/envs/myprojectenv/bin/python3 /home/ubuntu/envs/<br><br>พ.ย. 19 16:16:19 ubuntu-VirtualBox systemd[1]: Started gunicorn daemon for mypro<br>พ.ย. 19 16:16:19 ubuntu-VirtualBox gunicorn[14995]: [2019-11-19 16:16:19 +0700]<br>พ.ย. 19 16:16:20 ubuntu-VirtualBox gunicorn[14995]: [2019-11-19 16:16:19 +0700]<br>พ.ย. 19 16:16:20 ubuntu-VirtualBox gunicorn[14995]: [2019-11-19 16:16:19 +0700]<br>พ.ย. 19 16:16:20 ubuntu-VirtualBox gunicorn[14995]: [2019-11-19 16:16:19 +0700]<br>พ.ย. 19 16:16:20 ubuntu-VirtualBox gunicorn[14995]: [2019-11-19 16:16:20 +0700]<br>พ.ย. 19 16:16:20 ubuntu-VirtualBox gunicorn[14995]: [2019-11-19 16:16:20 +0700]<br>พ.ย. 19 16:16:20 ubuntu-VirtualBox gunicorn[14995]:  - - [19/Nov/2019:16:16:20 +
+
+If the output from `curl` or the output of `systemctl status` indicates that a problem occurred, check the logs for additional details
+
+`sudo journalctl -u myproject`
+
+Check your `/etc/systemd/system/myproject.service` file for problems. If you make changes to the `/etc/systemd/system/myproject.service` file, reload the daemon to reread the service definition and restart the Gunicorn process by typing
+
+```
+sudo systemctl daemon-reload
+sudo systemctl restart myproject
+```
+
+## Configure Nginx to Proxy Pass to Gunicorn
+Edit file `/etc/nginx/sites-available/default`
+
+`sudo nano /etc/nginx/sites-available/default`
+
+```
+server {
+    .
+    .
+    .
+    
+    location /myproject/static/ {
+        alias /home/ubuntu/websites/myproject/static/;
+    }
+
+    location /myproject {
+        include /etc/nginx/uwsgi_params;
+        proxy_pass http://unix:/run/myproject.sock;
+        uwsgi_param Host $host;
+        uwsgi_param X-Real-IP $remote_addr;
+        uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+        uwsgi_param X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    
+    location / {
+    
+    .
+    .
+    .
+}
+```
+
+Test your Nginx configuration for syntax errors
+
+`sudo nginx -t`
+
+If no errors are reported, go ahead and restart Nginx
+
+`sudo systemctl restart nginx`
