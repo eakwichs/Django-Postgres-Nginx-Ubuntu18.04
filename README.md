@@ -192,3 +192,16 @@ Next, check for the existence of the `myproject.sock` file within the `/run` dir
 `file /run/myproject.sock`
 
 > /run/myproject.sock: socket
+
+Check the socket’s logs
+
+`sudo journalctl -u myproject.socket`
+
+## Testing Socket Activation
+Currently, if you’ve only started the `myproject.socket` unit, the `myproject.service` will not be active yet since the socket has not yet received any connections. You can check this by typing
+
+`sudo systemctl status myproject`
+
+> - myproject.service - gunicorn daemon for myproject
+   Loaded: loaded (/etc/systemd/system/myproject.service; disabled; vendor prese
+   Active: inactive (dead)
