@@ -338,3 +338,10 @@ After edit systemd Socket and Service file, do this
 sudo systemctl daemon-reload
 sudo systemctl restart myproject
 ```
+
+<br><br>
+After edit Nginx configuration, do this
+```
+sudo nginx -t
+sudo systemctl restart nginx
+```
